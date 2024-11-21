@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Naver Map - Dynamic Map API</title>
+    <script
+      type="text/javascript"
+      src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=YOUR_CLIENT_ID"
+    ></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <script>
+      var map; // 지도 객체
+      var markers = []; // 마커 배열
+
+      // 지도 초기화 함수
+      function initMap() {
+        // 지도 중심 좌표 설정 (서울시청)
+        var cityhall = new naver.maps.LatLng(37.5666805, 126.9784147);
+
+        // 지도 생성
+        map = new naver.maps.Map("map", {
+          center: cityhall,
+          zoom: 15,
+          mapTypeControl: true,
+          gestureHandling: "cooperative", // 터치 및 클릭 허용
+        });
+
+        console.log("지도 초기화 완료");
+
+        // 초기 마커 추가
+        addMarkerWithInfoWindow(
+          37.5666805,
+          126.9784147,
+          "서울특별시청",
+          "서울특별시 중구 태평로1가 31"
+        );
+      }
+
+      // 마커 및 정보 창 추가 함수
+      function addMarkerWithInfoWindow(lat, lng, title, description) {
+        // 새로운 마커 생성
+        var marker = new naver.maps.Marker({
+          position: new naver.maps.LatLng(lat, lng),
+          map: map,
+          clickable: true, // 클릭 가능
+          zIndex: 100,
+        });
+
+        console.log(`마커 생성 완료: ${title}`);
+
+        // 정보 창 콘텐츠 생성
+        var contentString = `
+          <div style="width:250px; text-align:center; padding:10px;">
+            <h4>${title}</h4>
+            <p>${description}</p>
+          </div>
+        `;
+
+        // 정보 창 생성
+        var infowindow = new naver.maps.InfoWindow({
+          content: contentString,
+          disableAnchor: true,
+          zIndex: 101,
+        });
+
+        // 마커 클릭 이벤트 리스너 등록
+        naver.maps.Event.addListener(marker, "click", function () {
+          if (infowindow.getMap()) {
+            infowindow.close();
+            console.log(`정보 창 닫힘: ${title}`);
+          } else {
+            infowindow.open(map, marker);
+            console.log(`정보 창 열림: ${title}`);
+          }
+        });
+
+        // 마커를 markers 배열에 저장
+        markers.push({ marker: marker, infowindow: infowindow });
+        console.log(`마커 배열에 저장: ${title}`);
+      }
+
+      // 모든 마커 및 정보 창 제거 함수
+      function removeAllMarkers() {
+        for (var i = 0; i < markers.length; i++) {
+          var markerData = markers[i];
+          markerData.marker.setMap(null); // 지도에서 마커 제거
+          markerData.infowindow.close(); // 정보 창 닫기
+        }
+        markers = []; // 배열 초기화
+        console.log("모든 마커 제거 완료");
+      }
+
+      // Unity에서 메시지 받기 (예: 동적 마커 추가)
+      function receiveMessageFromUnity(message) {
+        console.log("Unity로부터 메시지 수신: " + message);
+
+        try {
+          var data = JSON.parse(message); // 메시지를 JSON으로 파싱
+          console.log("파싱된 데이터: ", data);
+
+          if (data.type === "addMarker") {
+            addMarkerWithInfoWindow(
+              data.latitude,
+              data.longitude,
+              data.title,
+              data.description
+            );
+          } else if (data.type === "removeAllMarkers") {
+            removeAllMarkers();
+          } else {
+            console.log("알 수 없는 메시지 타입: " + data.type);
+          }
+        } catch (error) {
+          console.error("Unity 메시지 파싱 오류: ", error);
+        }
+      }
+
+      // 페이지 로드 시 지도 초기화
+      window.onload = function () {
+        initMap();
+      };
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>
