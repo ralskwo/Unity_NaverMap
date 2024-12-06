@@ -142,7 +142,10 @@ public class NaverMapController : MonoBehaviour, IKeyPressButtonHandler
 
     public IEnumerator GetMapTile(float latitude, float longitude, int zoom)
     {
-        string apiUrl = $"{NaverMapAPI.Instance.mapStaticApiUrl}?w=500&h=500&center={longitude},{latitude}&level={zoom}&pos:{longitude} {latitude}";
+        // 현재 시간을 기반으로 고유한 쿼리 파라미터 생성
+        string timestamp = System.DateTime.UtcNow.Ticks.ToString();
+        string apiUrl = $"{NaverMapAPI.Instance.mapStaticApiUrl}?w=500&h=500&center={longitude},{latitude}&level={zoom}&pos:{longitude} {latitude}&_={timestamp}";
+
         UnityWebRequest request = UnityWebRequestTexture.GetTexture(apiUrl);
         request.SetRequestHeader("X-NCP-APIGW-API-KEY-ID", NaverMapAPI.Instance.clientID);
         request.SetRequestHeader("X-NCP-APIGW-API-KEY", NaverMapAPI.Instance.clientSecret);
@@ -161,4 +164,5 @@ public class NaverMapController : MonoBehaviour, IKeyPressButtonHandler
             mapImage.transform.localScale = Vector3.one * 3;
         }
     }
+
 }
